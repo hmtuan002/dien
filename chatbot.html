@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot - EcoPower</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2e86de;
+            --dark: #222f3e;
+            --light: #f5f6fa;
+            --text: #333;
+            --text-light: #576574;
+            --white: #ffffff;
+            --border: #dfe6e9;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--light);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        header {
+            background-color: var(--white);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            padding: 20px 0;
+            margin-bottom: 40px;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            font-size: 28px;
+            color: var(--primary);
+        }
+
+        .logo-text {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 20px;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: var(--text);
+            font-weight: 500;
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        nav a:hover, nav a.active {
+            background-color: var(--primary);
+            color: var(--white);
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .page-header h1 {
+            font-size: 2rem;
+            color: var(--dark);
+            margin-bottom: 15px;
+        }
+
+        .page-header p {
+            color: var(--text-light);
+        }
+
+        .chat-container {
+            background-color: var(--white);
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.03);
+            padding: 30px;
+            margin-bottom: 40px;
+        }
+
+        .chat-box {
+            height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            padding-right: 10px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 12px 16px;
+            margin-bottom: 15px;
+            border-radius: 18px;
+            line-height: 1.5;
+            position: relative;
+        }
+
+        .bot-message {
+            align-self: flex-start;
+            background-color: var(--light);
+            color: var(--text);
+            border-bottom-left-radius: 5px;
+            margin-right: auto;
+        }
+
+        .user-message {
+            align-self: flex-end;
+            background-color: var(--primary);
+            color: var(--white);
+            border-bottom-right-radius: 5px;
+            margin-left: auto;
+        }
+
+        .typing-indicator {
+            display: none;
+            background-color: var(--light);
+            color: var(--text-light);
+            padding: 10px 15px;
+            border-radius: 18px;
+            margin-bottom: 15px;
+            width: fit-content;
+            font-style: italic;
+        }
+
+        .input-area {
+            display: flex;
+            gap: 10px;
+        }
+
+        #userInput {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid var(--border);
+            border-radius: 30px;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        #userInput:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(46, 134, 222, 0.1);
+        }
+
+        #sendBtn {
+            background-color: var(--primary);
+            color: var(--white);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        #sendBtn:hover {
+            background-color: #2768b8;
+            transform: scale(1.05);
+        }
+
+        footer {
+            background-color: var(--dark);
+            color: var(--white);
+            padding: 30px 0;
+            text-align: center;
+        }
+
+        .footer-text {
+            opacity: 0.8;
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            nav ul {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .chat-box {
+                height: 300px;
+            }
+        }
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@google/generative-ai/dist/browser.min.js"></script>
+</head>
+<body>
+    <header>
+        <div class="container header-content">
+            <a href="index.html" class="logo">
+                <i class="fas fa-bolt logo-icon"></i>
+                <span class="logo-text">EcoPower</span>
+            </a>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Trang chủ</a></li>
+                    <li><a href="input.html">Nhập số điện</a></li>
+                    <li><a href="manage.html">Quản lý</a></li>
+                    <li><a href="chatbot.html" class="active">Chatbot</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="page-header">
+            <h1><i class="fas fa-robot"></i> Chatbot Tiết Kiệm Điện</h1>
+            <p>Nhận tư vấn thông minh về cách sử dụng điện hiệu quả</p>
+        </div>
+
+        <div class="chat-container">
+            <div class="chat-box" id="chatBox">
+                <div class="message bot-message">
+                    Xin chào! Tôi là trợ lý ảo EcoPower. Tôi có thể giúp gì cho bạn về vấn đề tiết kiệm điện?
+                </div>
+                <div class="typing-indicator" id="typingIndicator">
+                    <i class="fas fa-ellipsis-h"></i> Đang soạn tin nhắn...
+                </div>
+            </div>
+            
+            <div class="input-area">
+                <input type="text" id="userInput" placeholder="Nhập câu hỏi của bạn...">
+                <button id="sendBtn"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p class="footer-text">© 2023 EcoPower - Hệ thống quản lý điện thông minh</p>
+        </div>
+    </footer>
+
+    <script>
+        // Cấu hình Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyD2aQxqIlkcVG9NWR12wzxhGpcBNKf0Bto",
+            authDomain: "dien-3786a.firebaseapp.com",
+            projectId: "dien-3786a",
+            storageBucket: "dien-3786a.firebasestorage.app",
+            messagingSenderId: "447281533908",
+            appId: "1:447281533908:web:5ecb707b550e8366cc3c41",
+            measurementId: "G-3R95KGL8TL"
+        };
+
+        // Khởi tạo Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        
+        // Khởi tạo Gemini API
+        const genAI = new GoogleGenerativeAI('AIzaSyA6y8nT_KlSNNWCEbDhq4cnyuE3zdtzsd4');
+        let model;
+        
+        // Lịch sử chat
+        let chatHistory = [];
+        
+        // Hàm thêm tin nhắn vào chat
+        function addMessage(text, isUser) {
+            const chatBox = document.getElementById('chatBox');
+            const messageDiv = document.createElement('div');
+            
+            messageDiv.classList.add('message');
+            messageDiv.classList.add(isUser ? 'user-message' : 'bot-message');
+            messageDiv.textContent = text;
+            
+            chatBox.insertBefore(messageDiv, document.getElementById('typingIndicator'));
+            chatBox.scrollTop = chatBox.scrollHeight;
+            
+            // Thêm vào lịch sử chat
+            chatHistory.push({
+                role: isUser ? 'user' : 'bot',
+                content: text
+            });
+        }
+        
+        // Hàm hiển thị chỉ đang gõ
+        function showTypingIndicator(show) {
+            const typingIndicator = document.getElementById('typingIndicator');
+            typingIndicator.style.display = show ? 'block' : 'none';
+            document.getElementById('chatBox').scrollTop = document.getElementById('chatBox').scrollHeight;
+        }
+        
+        // Hàm lấy dữ liệu điện từ Firestore
+        async function getElectricityData() {
+            try {
+                const querySnapshot = await db.collection('electricityReadings')
+                    .orderBy('timestamp', 'desc')
+                    .limit(30)
+                    .get();
+                
+                const data = [];
+                querySnapshot.forEach(doc => {
+                    data.push(doc.data());
+                });
+                
+                return data;
+            } catch (error) {
+                console.error('Lỗi khi lấy dữ liệu điện:', error);
+                return null;
+            }
+        }
+        
+        // Hàm gửi tin nhắn đến Gemini
+        async function sendToGemini(userMessage) {
+            try {
+                showTypingIndicator(true);
+                
+                // Lấy dữ liệu điện từ Firestore
+                const electricityData = await getElectricityData();
+                
+                // Tạo prompt với ngữ cảnh
+                let prompt = `Bạn là một chuyên gia tư vấn về tiết kiệm điện có tên EcoPower. Hãy trả lời câu hỏi sau đây bằng tiếng Việt một cách thân thiện và dễ hiểu: ${userMessage}\n\n`;
+                
+                // Thêm dữ liệu điện nếu có
+                if (electricityData && electricityData.length > 0) {
+                    prompt += `Dữ liệu tiêu thụ điện gần đây của người dùng:\n`;
+                    electricityData.forEach((reading, index) => {
+                        prompt += `- Ngày ${reading.date}: ${reading.meterReading.toFixed(2)} kWh\n`;
+                    });
+                    prompt += `\nHãy phân tích và đưa ra lời khuyên phù hợp với thói quen sử dụng điện này.\n`;
+                }
+                
+                prompt += `Nếu câu hỏi không liên quan đến điện năng, hãy lịch sự từ chối trả lời và đề nghị hỏi về chủ đề tiết kiệm điện.`;
+                
+                // Khởi tạo model nếu chưa có
+                if (!model) {
+                    model = genAI.getGenerativeModel({ model: "gemini-pro" });
+                }
+                
+                // Gửi đến Gemini
+                const result = await model.generateContent(prompt);
+                const response = await result.response;
+                const text = response.text();
+                
+                showTypingIndicator(false);
+                addMessage(text, false);
+            } catch (error) {
+                console.error('Lỗi khi gửi đến Gemini:', error);
+                showTypingIndicator(false);
+                addMessage('Xin lỗi, tôi gặp sự cố khi xử lý yêu cầu của bạn. Vui lòng thử lại sau.', false);
+            }
+        }
+        
+        // Sự kiện khi trang được tải
+        document.addEventListener('DOMContentLoaded', () => {
+            // Sự kiện nút gửi
+            document.getElementById('sendBtn').addEventListener('click', () => {
+                const userInput = document.getElementById('userInput');
+                const message = userInput.value.trim();
+                
+                if (message) {
+                    addMessage(message, true);
+                    userInput.value = '';
+                    sendToGemini(message);
+                }
+            });
+            
+            // Sự kiện nhấn Enter
+            document.getElementById('userInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    document.getElementById('sendBtn').click();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
