@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Kết quả OCR</title>
+  <meta http-equiv="refresh" content="10">
+</head>
+<body>
+  <h2>Kết quả ảnh mới nhất:</h2>
+  <pre id="noidung">Đang tải...</pre>
+
+  <script>
+    fetch("last_result.txt")
+      .then(res => res.text())
+      .then(text => {
+        document.getElementById("noidung").innerText = text;
+      });
+  </script>
+</body>
+</html>
