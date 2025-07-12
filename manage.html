@@ -245,34 +245,6 @@
             height: 300px;
         }
 
-        .ai-analysis {
-            background-color: var(--white);
-            border-radius: 10px;
-            padding: 25px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.03);
-            margin-top: 30px;
-        }
-
-        .ai-analysis h3 {
-            font-size: 1.3rem;
-            color: var(--dark);
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .ai-analysis h3 i {
-            color: var(--primary);
-        }
-
-        .ai-content {
-            background-color: var(--light);
-            padding: 15px;
-            border-radius: 8px;
-            line-height: 1.7;
-        }
-
         footer {
             background-color: var(--dark);
             color: var(--white);
@@ -312,7 +284,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@google/generative-ai/dist/browser.min.js"></script>
 </head>
 <body>
     <header>
@@ -401,13 +372,6 @@
                 </div>
             </div>
         </div>
-
-        <div class="ai-analysis">
-            <h3><i class="fas fa-robot"></i> Phân tích của AI</h3>
-            <div class="ai-content" id="aiAnalysisContent">
-                Đang tải phân tích từ AI...
-            </div>
-        </div>
     </main>
 
     <footer>
@@ -417,7 +381,6 @@
     </footer>
 
     <script>
-        // Cấu hình Firebase
         // Cấu hình Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyD2aQxqIlkcVG9NWR12wzxhGpcBNKf0Bto",
@@ -432,9 +395,6 @@
         // Khởi tạo Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        
-        // Khởi tạo Gemini API
-        const genAI = new GoogleGenerativeAI('AIzaSyA6y8nT_KlSNNWCEbDhq4cnyuE3zdtzsd4');
         
         // Biến toàn cục
         let readings = [];
@@ -555,11 +515,6 @@
             // Vẽ biểu đồ tròn
             drawConsumptionPieChart(rateDistribution);
             drawCostPieChart(totalConsumption, totalCost);
-            
-            // Phân tích bằng AI
-            if (filteredReadings.length > 1) {
-                generateAIAnalysis(filteredReadings, totalConsumption, totalCost);
-            }
         }
         
         // Hàm vẽ biểu đồ tròn tiêu thụ theo bậc thang
@@ -669,66 +624,6 @@
                     }
                 }
             });
-        }
-        
-        // Hàm tạo phân tích từ AI
-        async function generateAIAnalysis(readings, totalConsumption, totalCost) {
-            try {
-                const aiContent = document.getElementById('aiAnalysisContent');
-                aiContent.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang phân tích dữ liệu...';
-                
-                // Chuẩn bị dữ liệu để gửi cho AI
-                const dataForAI = readings.map(reading => ({
-                    date: reading.date,
-                    meterReading: reading.meterReading
-                }));
-                
-                // Sắp xếp theo ngày
-                dataForAI.sort((a, b) => new Date(a.date) - new Date(b.date));
-                
-                // Tính toán mức tiêu thụ hàng ngày
-                const dailyConsumption = [];
-                for (let i = 1; i < dataForAI.length; i++) {
-                    dailyConsumption.push({
-                        date: dataForAI[i].date,
-                        consumption: dataForAI[i].meterReading - dataForAI[i-1].meterReading
-                    });
-                }
-                
-                // Tạo prompt cho AI
-                const prompt = `
-                Bạn là một chuyên gia phân tích tiêu thụ điện. Hãy phân tích dữ liệu sau và đưa ra nhận xét, đề xuất cách tiết kiệm điện bằng tiếng Việt:
-                
-                - Tổng điện năng tiêu thụ: ${totalConsumption.toFixed(2)} kWh
-                - Tổng chi phí điện: ${totalCost.toLocaleString('vi-VN')} VND
-                - Số ngày theo dõi: ${readings.length - 1} ngày
-                - Mức tiêu thụ trung bình: ${(totalConsumption / (readings.length - 1)).toFixed(2)} kWh/ngày
-                
-                Dữ liệu tiêu thụ hàng ngày:
-                ${dailyConsumption.map(item => `- Ngày ${item.date}: ${item.consumption.toFixed(2)} kWh`).join('\n')}
-                
-                Hãy phân tích:
-                1. Xu hướng tiêu thụ điện
-                2. So sánh với mức trung bình của hộ gia đình Việt Nam
-                3. Đề xuất các biện pháp tiết kiệm điện cụ thể
-                4. Ước tính tiềm năng tiết kiệm nếu áp dụng các biện pháp
-                
-                Trả lời bằng tiếng Việt với văn phong thân thiện, dễ hiểu, định dạng HTML với các gạch đầu dòng.
-                `;
-                
-                // Gửi đến Gemini API
-                const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-                const result = await model.generateContent(prompt);
-                const response = await result.response;
-                const text = response.text();
-                
-                // Hiển thị kết quả
-                aiContent.innerHTML = text;
-            } catch (error) {
-                console.error('Lỗi khi phân tích bằng AI:', error);
-                document.getElementById('aiAnalysisContent').innerHTML = 
-                    'Không thể tải phân tích từ AI. Vui lòng thử lại sau.';
-            }
         }
         
         // Lấy dữ liệu từ Firestore
